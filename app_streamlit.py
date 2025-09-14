@@ -9,7 +9,7 @@ from model_inference import analyze_sentiment, analyze_batch
 st.set_page_config(page_title="E-Consultation Sentiment Analysis", layout="wide")
 
 st.title("💬 Sentiment Analysis of E-Consultation Comments")
-st.write("Analyze patient feedback in real-time using a pre-trained BERT model.")
+st.write("Analyze patient feedback in real-time using a pre-trained RoBERTa model (Positive, Neutral, Negative).")
 
 # Sidebar options
 st.sidebar.title("Options")
@@ -36,15 +36,14 @@ elif mode == "Upload File":
             results = analyze_batch(df['comment'].tolist())
             results_df = pd.DataFrame(results)
             
-            st.subheader("📋 Sample Results")
-            # ✅ Scrollable results table
-            st.dataframe(results_df, use_container_width=True, height=600)
+            st.subheader("📋 Results")
+            st.dataframe(results_df, use_container_width=True, height=600)  # ✅ scrollable
 
             # Sentiment distribution
             st.subheader("📊 Sentiment Distribution")
             sentiment_counts = results_df['label'].value_counts()
             fig, ax = plt.subplots()
-            sentiment_counts.plot(kind="bar", ax=ax, color=["green", "red"])
+            sentiment_counts.plot(kind="bar", ax=ax, color=["green", "blue", "red"])
             plt.xticks(rotation=0)
             st.pyplot(fig)
 
