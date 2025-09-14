@@ -30,7 +30,12 @@ elif mode == "Upload File":
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
         df.columns = [col.lower() for col in df.columns]
-        if "comment" not in df.columns:
+        comment_col = None
+        if "comment" in df.columns:
+            comment_col = "comment"
+        elif "comments" in df.columns:
+            comment_col = "comments"
+        if comment_col is None:
             st.error("CSV must contain a 'comment' column.")
         else:
             st.write("✅ File uploaded successfully!")
