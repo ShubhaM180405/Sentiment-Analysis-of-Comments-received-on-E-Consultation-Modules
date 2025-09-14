@@ -1,57 +1,58 @@
-# app_streamlit.py
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
-from model_inference import analyze_sentiment, analyze_batch
+from model_inference import predict_sentiment
 
-# Page config
 st.set_page_config(page_title="E-Consultation Sentiment Analysis", layout="wide")
 
 st.title("💬 Sentiment Analysis of E-Consultation Comments")
-st.write("Analyze patient feedback in real-time using a pre-trained BERT model.")
+st.write("Analyze feedback using a BERT model in real-time!")
 
-# Sidebar options
-st.sidebar.title("Options")
-mode = st.sidebar.radio("Choose Input Mode:", ["Single Comment", "Upload File"])
+# Single comment analysis
+st.header("🔹 Single Comment Analysis")
+user_input = st.text_area("Enter a comment here:")
 
-if mode == "Single Comment":
-    comment = st.text_area("✍️ Enter a comment for analysis:")
-    if st.button("Analyze"):
-        if comment.strip():
-            result = analyze_sentiment(comment)
-            st.subheader("🔎 Result")
-            st.write(f"**Sentiment:** {result['label']}  |  **Confidence:** {result['score']}")
-        else:
-            st.warning("Please enter a comment.")
+if st.button("Analyze Sentiment"):
+    if user_input.strip():
+        label, score = predict_sentiment(user_input)
+        st.success(f"**Sentiment:** {label} | **Confidence:** {score:.2f}")
+    else:
+        st.warning("⚠️ Please enter a comment.")
 
-elif mode == "Upload File":
-    uploaded_file = st.file_uploader("📂 Upload a CSV file with a 'comment' column", type=["csv"])
-    if uploaded_file is not None:
-        df = pd.read_csv(uploaded_file)
-        if "comment" not in df.columns:
-            st.error("CSV must contain a 'comment' column.")
-        else:
-            st.write("✅ File uploaded successfully!")
-            results = analyze_batch(df['comment'].tolist())
-            results_df = pd.DataFrame(results)
-            
-            st.subheader("📋 Sample Results")
-            st.dataframe(results_df.head())
+# Bulk analysis
+st.header("📂 Bulk Comment Analysis (CSV Upload)")
+uploaded_file = st.file_uploader("Upload a CSV file with a 'comment' column", type=["csv"])
 
-            # Sentiment distribution
-            st.subheader("📊 Sentiment Distribution")
-            sentiment_counts = results_df['label'].value_counts()
-            fig, ax = plt.subplots()
-            sentiment_counts.plot(kind="bar", ax=ax, color=["green", "red"])
-            plt.xticks(rotation=0)
-            st.pyplot(fig)
+if uploaded_file:
+    df = pd.read_csv(uploaded_file)
 
-            # Wordcloud
-            st.subheader("☁️ WordCloud of Feedback")
-            text = " ".join(results_df['comment'])
-            wordcloud = WordCloud(width=800, height=400, background_color="white").generate(text)
-            fig_wc, ax_wc = plt.subplots()
-            ax_wc.imshow(wordcloud, interpolation="bilinear")
-            ax_wc.axis("off")
-            st.pyplot(fig_wc)
+    if "comment" not in df.columns:
+        st.error("CSV must contain a 'comment' column.")
+    else:
+        # Run sentiment analysis
+        results = [predict_sentiment(text) for text in df["comment"].astype(str)]
+        df["Sentiment"], df["Confidence"] = zip(*results)
+
+        st.subheader("📋 Results")
+        st.dataframe(df, use_container_width=True, height=600)  # ✅ Scrollable table
+
+        # Plot distribution
+        st.subheader("📊 Sentiment Distribution")
+        sentiment_counts = df["Sentiment"].value_counts()
+
+        fig, ax = plt.subplots()
+        sentiment_counts.plot(kind="bar", ax=ax)
+        ax.set_title("Sentiment Distribution")
+        ax.set_ylabel("Count")
+        st.pyplot(fig)
+
+        # WordCloud
+        st.subheader("☁️ WordCloud of Comments")
+        text = " ".join(df["comment"].astype(str))
+        wc = WordCloud(width=800, height=400, background_color="white").generate(text)
+
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.imshow(wc, interpolation="bilinear")
+        ax.axis("off")
+        st.pyplot(fig)
