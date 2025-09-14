@@ -1,39 +1,40 @@
-# model_inference.py
 from transformers import pipeline
+import numpy as np
 
 # Load 3-class sentiment model
-sentiment_pipeline = pipeline("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment")
+sentiment_pipeline = pipeline("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment", return_all_scores=True)
 
-# Map model outputs to readable labels
 label_mapping = {
-    "LABEL_0": "Negative",
-    "LABEL_1": "Neutral",
-    "LABEL_2": "Positive"
+    0: "Negative",
+    1: "Neutral",
+    2: "Positive"
 }
 
+def get_custom_label(scores):
+    # Convert to dict {label: score}
+    score_dict = {label_mapping[i]: s['score'] for i, s in enumerate(scores)}
+
+    # Find top label
+    top_label = max(score_dict, key=score_dict.get)
+    top_score = score_dict[top_label]
+
+    # If neutral is close, mark as leaning
+    if score_dict["Neutral"] > 0.3 and top_label != "Neutral":
+        return f"Neutral (but leaning towards {top_label} side)", round(score_dict["Neutral"], 4)
+
+    return top_label, round(top_score, 4)
+
+
 def analyze_sentiment(comment: str):
-    """
-    Analyze sentiment of a single comment.
-    Returns label and confidence score.
-    """
-    result = sentiment_pipeline(comment[:512])[0]  # truncate long comments
-    return {
-        "comment": comment,
-        "label": label_mapping[result["label"]],
-        "score": round(result["score"], 4)
-    }
+    scores = sentiment_pipeline(comment[:512])[0]
+    label, confidence = get_custom_label(scores)
+    return {"comment": comment, "label": label, "score": confidence}
+
 
 def analyze_batch(comments: list):
-    """
-    Analyze sentiment of a batch of comments.
-    Returns list of dicts with label + score.
-    """
     results = sentiment_pipeline(comments, truncation=True)
     output = []
-    for comment, res in zip(comments, results):
-        output.append({
-            "comment": comment,
-            "label": label_mapping[res["label"]],
-            "score": round(res["score"], 4)
-        })
+    for comment, scores in zip(comments, results):
+        label, confidence = get_custom_label(scores)
+        output.append({"comment": comment, "label": label, "score": confidence})
     return output
