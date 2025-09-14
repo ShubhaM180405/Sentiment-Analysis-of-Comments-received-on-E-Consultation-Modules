@@ -20,7 +20,7 @@ def get_custom_label(scores):
 
     # If neutral is close, mark as leaning
     if score_dict["Neutral"] > 0.3 and top_label != "Neutral":
-        return f"Neutral (but leaning towards {top_label} side)", round(score_dict["Neutral"], 4)
+        return f"Neutral (dominantly {top_label})", round(score_dict["Neutral"], 4)
 
     return top_label, round(top_score, 4)
 
