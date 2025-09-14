@@ -9,7 +9,7 @@ from model_inference import analyze_sentiment, analyze_batch
 st.set_page_config(page_title="E-Consultation Sentiment Analysis", layout="wide")
 
 st.title("💬 Sentiment Analysis of E-Consultation Comments")
-st.write("Analyze patient feedback in real-time using a pre-trained RoBERTa model (Positive, Neutral, Negative).")
+st.write("Analyze patient feedback in real-time.")
 
 # Sidebar options
 st.sidebar.title("Options")
@@ -29,6 +29,7 @@ elif mode == "Upload File":
     uploaded_file = st.file_uploader("📂 Upload a CSV file with a 'comment' column", type=["csv"])
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
+        df.columns = [col.lower() for col in df.columns]
         if "comment" not in df.columns:
             st.error("CSV must contain a 'comment' column.")
         else:
