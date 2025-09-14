@@ -39,7 +39,7 @@ elif mode == "Upload File":
             st.error("CSV must contain a 'comment' column.")
         else:
             st.write("✅ File uploaded successfully!")
-            results = analyze_batch(df['comment'].tolist())
+            results = analyze_batch(df[comment_col].tolist())
             results_df = pd.DataFrame(results)
             
             st.subheader("📋 Results")
