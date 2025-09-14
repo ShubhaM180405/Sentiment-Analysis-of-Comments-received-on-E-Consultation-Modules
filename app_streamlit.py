@@ -1,8 +1,9 @@
+# app_streamlit.py
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
-from model_inference import predict_sentiment
+from model_inference import analyze_sentiment, analyze_batch
 
 st.set_page_config(page_title="E-Consultation Sentiment Analysis", layout="wide")
 
@@ -56,4 +57,3 @@ if uploaded_file:
         ax.imshow(wc, interpolation="bilinear")
         ax.axis("off")
         st.pyplot(fig)
-
