@@ -1,41 +1,24 @@
 # model_inference.py
 from transformers import pipeline
 
-# Load pre-trained BERT model for sentiment analysis
-sentiment_pipeline = pipeline("sentiment-analysis")
+# Load sentiment analysis pipeline with 3 labels: NEGATIVE, NEUTRAL, POSITIVE
+sentiment_pipeline = pipeline("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment")
 
 def analyze_sentiment(comment: str):
     """
-    Analyze sentiment of a single comment using pre-trained BERT model.
-    Returns: dict with label and score
+    Analyze sentiment of a single comment.
+    Returns label and confidence score.
     """
-    result = sentiment_pipeline(comment)[0]
-    return {
-        "comment": comment,
-        "label": result['label'],   # POSITIVE / NEGATIVE
-        "score": round(result['score'], 3)
-    }
+    result = sentiment_pipeline(comment[:512])[0]  # truncate if longer than 512 tokens
+    return {"comment": comment, "label": result["label"], "score": round(result["score"], 4)}
 
 def analyze_batch(comments: list):
     """
-    Analyze sentiment of a list of comments.
-    Returns: list of dicts
+    Analyze sentiment of a batch of comments.
+    Returns list of dicts with label + score.
     """
-    results = sentiment_pipeline(comments)
+    results = sentiment_pipeline(comments, truncation=True)
     output = []
     for comment, res in zip(comments, results):
-        output.append({
-            "comment": comment,
-            "label": res['label'],
-            "score": round(res['score'], 3)
-        })
+        output.append({"comment": comment, "label": res["label"], "score": round(res["score"], 4)})
     return output
-
-if __name__ == "__main__":
-    # Quick test
-    test_comments = [
-        "The doctor was very helpful and kind!",
-        "I had to wait too long for my consultation."
-    ]
-    for r in analyze_batch(test_comments):
-        print(r)
